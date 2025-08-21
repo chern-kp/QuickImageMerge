@@ -1,8 +1,10 @@
 #include "mainwindow.h"
+#include "imageprocessor.h"
 #include "ui_mainwindow.h"
 #include <QEvent>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
@@ -44,19 +46,18 @@ void MainWindow::openFileDialog()
         "Image Files (*.png *.jpg *.jpeg *.bmp)"
     );
 
+    // Check if the user selected any files
     if (!filePaths.isEmpty()) {
-        // Create a new list that will hold just the file names
-        QStringList fileNames;
-
-        // Iterate through each full path provided by the dialog
+        // Iterate over each selected file path
         for (const QString &fullPath : filePaths) {
-            // Use QFileInfo to easily extract just the file name
-            QFileInfo fileInfo(fullPath);
-            fileNames.append(fileInfo.fileName());
+            QFileInfo fileInfo(fullPath); // Get file info for the path
+            // Create a new list widget item with the file name
+            QListWidgetItem *item = new QListWidgetItem(fileInfo.fileName());
+            // Store the full file path in the item's user data
+            item->setData(Qt::UserRole, fullPath);
+            // Add the item to the file list widget
+            ui->fileListWidget->addItem(item);
         }
-
-        // Add all the extracted file names to our list widget in one go
-        ui->fileListWidget->addItems(fileNames);
     }
 }
 
@@ -109,5 +110,50 @@ void MainWindow::on_downButton_clicked()
 
         // 5. Re-select the item
         ui->fileListWidget->setCurrentRow(currentRow + 1);
+    }
+}
+
+// FUNC - Slot for the merge button.
+void MainWindow::on_mergeButton_clicked()
+{
+    // 1. Get the full paths from the list widget
+    QStringList imagePaths;
+    for (int i = 0; i < ui->fileListWidget->count(); ++i) {
+        QListWidgetItem *item = ui->fileListWidget->item(i);
+        // Retrieve the full path we stored earlier
+        imagePaths.append(item->data(Qt::UserRole).toString());
+    }
+
+    if (imagePaths.isEmpty()) {
+        QMessageBox::warning(this, "No Images", "Please add images to the list first.");
+        return;
+    }
+
+    // 2. Call the ImageProcessor
+    ImageProcessor processor;
+    QImage resultImage = processor.stitchImagesVertically(imagePaths, Qt::black);
+
+    if (resultImage.isNull()) {
+        QMessageBox::critical(this, "Error", "Failed to create the merged image.");
+        return;
+    }
+
+    // 3. Ask the user where to save the file
+    QString savePath = QFileDialog::getSaveFileName(
+        this,
+        "Save Merged Image",
+        "merged_image.png",
+        "PNG Image (*.png);;JPEG Image (*.jpg *.jpeg)"
+    );
+
+    if (savePath.isEmpty()) {
+        return; // User cancelled the dialog
+    }
+
+    // 4. Save the image and show a message
+    if (resultImage.save(savePath)) {
+        QMessageBox::information(this, "Success", "Image saved successfully to:\n" + savePath);
+    } else {
+        QMessageBox::critical(this, "Error", "Failed to save the image to:\n" + savePath);
     }
 }

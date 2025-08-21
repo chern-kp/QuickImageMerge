@@ -25,6 +25,7 @@ private slots:
     void on_deleteImageButton_clicked(); // Slot for 'deleteImageButton' button
     void on_upButton_clicked(); // Slot for 'upButton' button
     void on_downButton_clicked(); // Slot for 'downButton' button
+    void on_mergeButton_clicked(); // Slot for 'mergeButton' button
 
 
 

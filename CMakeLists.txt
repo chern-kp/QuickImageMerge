@@ -17,6 +17,8 @@ add_executable(QuickImageMerge
     mainwindow.cpp
     mainwindow.h
     mainwindow.ui
+    imageprocessor.cpp
+    imageprocessor.h
 )
 
 target_link_libraries(QuickImageMerge PRIVATE Qt6::Widgets)
