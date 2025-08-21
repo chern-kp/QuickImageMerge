@@ -17,6 +17,7 @@ A lightweight Windows application built with C++ and Qt for merging multiple ima
 
 - [ ] Custom color for background.
 - [ ] Button for Windows context menu.
+- [ ] Image thumbnails.
 - [ ] Merge into grid.
 
 ## Download
