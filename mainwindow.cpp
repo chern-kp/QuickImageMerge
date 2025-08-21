@@ -12,6 +12,10 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     ui->fileSelectionZone->installEventFilter(this);
+
+    connect(ui->optionOrientation, &QComboBox::currentIndexChanged, this, &MainWindow::on_optionOrientation_currentIndexChanged);
+    on_optionOrientation_currentIndexChanged(ui->optionOrientation->currentIndex());
+
 }
 
 MainWindow::~MainWindow()
@@ -113,47 +117,67 @@ void MainWindow::on_downButton_clicked()
     }
 }
 
+// FUNC - Slot for the orientation combo box
+void MainWindow::on_optionOrientation_currentIndexChanged(int index)
+{
+    ui->optionAlignment->clear(); // Remove old items
+    QString currentOrientation = ui->optionOrientation->itemText(index);
+
+    if (currentOrientation == "Vertical") {
+        ui->optionAlignment->addItems({"Left", "Center", "Right"});
+    } else { // Horizontal
+        ui->optionAlignment->addItems({"Top", "Center", "Bottom"});
+    }
+}
+
+
+
 // FUNC - Slot for the merge button.
 void MainWindow::on_mergeButton_clicked()
 {
-    // 1. Get the full paths from the list widget
     QStringList imagePaths;
     for (int i = 0; i < ui->fileListWidget->count(); ++i) {
-        QListWidgetItem *item = ui->fileListWidget->item(i);
-        // Retrieve the full path we stored earlier
-        imagePaths.append(item->data(Qt::UserRole).toString());
+        imagePaths.append(ui->fileListWidget->item(i)->data(Qt::UserRole).toString());
     }
-
     if (imagePaths.isEmpty()) {
         QMessageBox::warning(this, "No Images", "Please add images to the list first.");
         return;
     }
 
-    // 2. Call the ImageProcessor
+    // --- 1. Read options from ComboBoxes ---
+    // Orientation
+    Orientation orientation = (ui->optionOrientation->currentText() == "Vertical")
+                                ? Orientation::Vertical
+                                : Orientation::Horizontal;
+    // Background Color
+    QColor backgroundColor;
+    QString bgColorText = ui->optionBackgroundColor->currentText();
+    if (bgColorText == "Black")         backgroundColor = Qt::black;
+    else if (bgColorText == "White")    backgroundColor = Qt::white;
+    else                                backgroundColor = Qt::transparent; // Alpha Channel
+    // Alignment
+    Alignment alignment;
+    QString alignText = ui->optionAlignment->currentText();
+    if (alignText == "Left" || alignText == "Top")         alignment = Alignment::Left_Top;
+    else if (alignText == "Center")                        alignment = Alignment::Center;
+    else                                                   alignment = Alignment::Right_Bottom;
+
+
+    // --- 2. Call the updated ImageProcessor ---
     ImageProcessor processor;
-    QImage resultImage = processor.stitchImagesVertically(imagePaths, Qt::black);
+    QImage resultImage = processor.stitchImages(imagePaths, orientation, alignment, backgroundColor);
 
     if (resultImage.isNull()) {
         QMessageBox::critical(this, "Error", "Failed to create the merged image.");
         return;
     }
 
-    // 3. Ask the user where to save the file
-    QString savePath = QFileDialog::getSaveFileName(
-        this,
-        "Save Merged Image",
-        "merged_image.png",
-        "PNG Image (*.png);;JPEG Image (*.jpg *.jpeg)"
-    );
-
-    if (savePath.isEmpty()) {
-        return; // User cancelled the dialog
-    }
-
-    // 4. Save the image and show a message
+    // --- 3. Save the result (this part remains the same) ---
+    QString savePath = QFileDialog::getSaveFileName(this, "Save Merged Image", "merged_image.png", "PNG Image (*.png);;JPEG Image (*.jpg *.jpeg)");
+    if (savePath.isEmpty()) return;
     if (resultImage.save(savePath)) {
-        QMessageBox::information(this, "Success", "Image saved successfully to:\n" + savePath);
+        QMessageBox::information(this, "Success", "Image saved successfully!");
     } else {
-        QMessageBox::critical(this, "Error", "Failed to save the image to:\n" + savePath);
+        QMessageBox::critical(this, "Error", "Failed to save the image.");
     }
 }

@@ -26,6 +26,7 @@ private slots:
     void on_upButton_clicked(); // Slot for 'upButton' button
     void on_downButton_clicked(); // Slot for 'downButton' button
     void on_mergeButton_clicked(); // Slot for 'mergeButton' button
+    void on_optionOrientation_currentIndexChanged(int index); // Slot for 'optionOrientation' combo box (dropdown menu)
 
 
 

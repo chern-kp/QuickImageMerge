@@ -4,10 +4,26 @@
 #include <QStringList>
 #include <QColor>
 
+enum class Orientation {
+    Vertical,
+    Horizontal
+};
+
+enum class Alignment {
+    Left_Top,
+    Center,
+    Right_Bottom
+};
+
+
 class ImageProcessor
 {
 public:
     ImageProcessor();
 
-    QImage stitchImagesVertically(const QStringList &imagePaths, const QColor &backgroundColor);
+    //FUNC - Stitch multiple images together
+    QImage stitchImages(const QStringList &imagePaths,
+                        Orientation orientation,
+                        Alignment alignment,
+                        const QColor &backgroundColor);
 };
