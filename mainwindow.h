@@ -21,6 +21,10 @@ protected:
     // We are overriding this function to watch for events
     bool eventFilter(QObject *watched, QEvent *event) override;
 
+private slots:
+    void on_deleteImageButton_clicked();     // This slot will be automatically called when 'deleteImageButton' is clicked.
+
+
 private:
     // A helper function to keep the code clean
     void openFileDialog();

@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include <QEvent>
 #include <QFileDialog>
+#include <QFileInfo>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
@@ -44,6 +45,30 @@ void MainWindow::openFileDialog()
     );
 
     if (!filePaths.isEmpty()) {
-        // TODO
+        // Create a new list that will hold just the file names
+        QStringList fileNames;
+
+        // Iterate through each full path provided by the dialog
+        for (const QString &fullPath : filePaths) {
+            // Use QFileInfo to easily extract just the file name
+            QFileInfo fileInfo(fullPath);
+            fileNames.append(fileInfo.fileName());
+        }
+
+        // Add all the extracted file names to our list widget in one go
+        ui->fileListWidget->addItems(fileNames);
+    }
+}
+
+// FUNC - Slot for the delete button.
+void MainWindow::on_deleteImageButton_clicked()
+{
+    // QListWidget::selectedItems() returns a list of all selected items.
+    // Even if we are in single-selection mode, it still returns a list (with one item).
+    QList<QListWidgetItem *> selectedItems = ui->fileListWidget->selectedItems();
+
+    // Check if the list is not empty (i.e., the user has selected something)
+    if (!selectedItems.isEmpty()) {
+        qDeleteAll(selectedItems);
     }
 }

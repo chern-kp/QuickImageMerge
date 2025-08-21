@@ -48,7 +48,7 @@ border-radius: 5px;</string>
     <property name="geometry">
      <rect>
       <x>360</x>
-      <y>250</y>
+      <y>280</y>
       <width>31</width>
       <height>24</height>
      </rect>
@@ -61,7 +61,7 @@ border-radius: 5px;</string>
     <property name="geometry">
      <rect>
       <x>360</x>
-      <y>290</y>
+      <y>310</y>
       <width>31</width>
       <height>24</height>
      </rect>
@@ -81,6 +81,19 @@ border-radius: 5px;</string>
     </property>
     <property name="text">
      <string>Merge Images</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="deleteImageButton">
+    <property name="geometry">
+     <rect>
+      <x>360</x>
+      <y>250</y>
+      <width>31</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>🗑</string>
     </property>
    </widget>
   </widget>
