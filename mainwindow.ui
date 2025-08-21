@@ -126,16 +126,6 @@
                     <property name="placeholderText">
                         <string />
                     </property>
-                    <item>
-                        <property name="text">
-                            <string>Vertical</string>
-                        </property>
-                    </item>
-                    <item>
-                        <property name="text">
-                            <string>Horizontal</string>
-                        </property>
-                    </item>
                 </widget>
                 <widget class="QLabel" name="optionOrientationLabel">
                     <property name="geometry">
@@ -184,21 +174,6 @@
                             <height>22</height>
                         </rect>
                     </property>
-                    <item>
-                        <property name="text">
-                            <string>White</string>
-                        </property>
-                    </item>
-                    <item>
-                        <property name="text">
-                            <string>Black</string>
-                        </property>
-                    </item>
-                    <item>
-                        <property name="text">
-                            <string>Alpha Channel</string>
-                        </property>
-                    </item>
                 </widget>
                 <widget class="QLabel" name="optionAlignmentLabel">
                     <property name="geometry">

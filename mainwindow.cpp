@@ -1,31 +1,28 @@
 #include "mainwindow.h"
-#include "imageprocessor.h"
 #include "ui_mainwindow.h"
-
-#include <QEvent>
-#include <QFileDialog>
-#include <QFileInfo>
-#include <QMessageBox>
 
 #include <QDragEnterEvent>
 #include <QDropEvent>
+#include <QEvent>
+#include <QFileDialog>
+#include <QFileInfo>
 #include <QMimeData>
+#include <QMessageBox>
 #include <QUrl>
 
+const QStringList MainWindow::SUPPORTED_EXTENSIONS = {"png", "jpg", "jpeg", "bmp"};
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent),
-      ui(new Ui::MainWindow)
+MainWindow::MainWindow(QWidget* parent)
+    : QMainWindow(parent)
+    , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
 
     setAcceptDrops(true);
-
     ui->fileSelectionZone->installEventFilter(this);
 
-    connect(ui->optionOrientation, &QComboBox::currentIndexChanged, this, &MainWindow::on_optionOrientation_currentIndexChanged);
-    on_optionOrientation_currentIndexChanged(ui->optionOrientation->currentIndex());
-
+    setupOptionControls();
+    setupConnections();
 }
 
 MainWindow::~MainWindow()
@@ -33,10 +30,34 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-// FUNC - Drag event (For Drag & Drop)
-void MainWindow::dragEnterEvent(QDragEnterEvent *event)
+// SECTION - Setup Methods
+
+void MainWindow::setupConnections()
 {
-    // Check if the dragged data contains URLs (which files are)
+    // Connect the orientation dropdown to our new slot
+    connect(ui->optionOrientation, &QComboBox::currentIndexChanged, this, &MainWindow::on_orientationOption_changed);
+}
+
+void MainWindow::setupOptionControls()
+{
+    // Populate orientation options, storing enum values in UserRole data
+    ui->optionOrientation->addItem("Vertical", QVariant::fromValue(Orientation::Vertical));
+    ui->optionOrientation->addItem("Horizontal", QVariant::fromValue(Orientation::Horizontal));
+
+    // Populate background color options
+    ui->optionBackgroundColor->addItem("White", QVariant::fromValue(QColor(Qt::white)));
+    ui->optionBackgroundColor->addItem("Black", QVariant::fromValue(QColor(Qt::black)));
+    ui->optionBackgroundColor->addItem("Transparent", QVariant::fromValue(QColor(Qt::transparent)));
+
+    // Initial population of the alignment dropdown
+    populateAlignmentOptions();
+}
+
+// !SECTION - Setup Methods
+// SECTION - Event Handlers
+
+void MainWindow::dragEnterEvent(QDragEnterEvent* event)
+{
     if (event->mimeData()->hasUrls()) {
         // If so, accept the proposed action (e.g., show a "+" cursor)
         event->acceptProposedAction();
@@ -46,75 +67,59 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event)
 // FUNC - Drop event (For Drag & Drop)
 void MainWindow::dropEvent(QDropEvent *event)
 {
-    // Get the list of URLs from the MIME data
-    const QList<QUrl> urls = event->mimeData()->urls();
     QStringList filePaths;
-
-    // Convert each QUrl to a local file path string
-    for (const QUrl &url : urls) {
-        filePaths.append(url.toLocalFile());
+    const QList<QUrl> urls = event->mimeData()->urls();
+    for (const QUrl& url : urls) {
+        if (url.isLocalFile()) {
+            filePaths.append(url.toLocalFile());
+        }
     }
-
-    // Use our new helper function to process the files
     addFilesToList(filePaths);
 }
 
-// FUNC - Add Files to List
-void MainWindow::addFilesToList(const QStringList &paths)
+bool MainWindow::eventFilter(QObject* watched, QEvent* event)
 {
-    QStringList supportedExtensions = {"png", "jpg", "jpeg", "bmp"};
+    if (watched == ui->fileSelectionZone && event->type() == QEvent::MouseButtonPress) {
+        openFileDialog();
+        return true; // Event handled
+    }
+    return QMainWindow::eventFilter(watched, event);
+}
 
-    for (const QString &fullPath : paths) {
+// !SECTION - Event Handlers
+// SECTION - UI Helper Methods
+
+// FUNC - Add Files to List
+void MainWindow::addFilesToList(const QStringList& paths)
+{
+    for (const QString& fullPath : paths) {
         QFileInfo fileInfo(fullPath);
-        // Add only files with supported image extensions
-        if (supportedExtensions.contains(fileInfo.suffix().toLower())) {
-            auto *item = new QListWidgetItem(fileInfo.fileName());
+        if (SUPPORTED_EXTENSIONS.contains(fileInfo.suffix().toLower())) {
+            auto* item = new QListWidgetItem(fileInfo.fileName());
             item->setData(Qt::UserRole, fullPath); // Store full path
+            item->setToolTip(fullPath); // Show full path on hover
             ui->fileListWidget->addItem(item);
         }
     }
-}
-
-// FUNC - Event filter function
-bool MainWindow::eventFilter(QObject *watched, QEvent *event)
-{
-    // 1. Check if the event is coming from our specific label
-    if (watched == ui->fileSelectionZone) {
-        // 2. Check if the event is a mouse button press
-        if (event->type() == QEvent::MouseButtonPress) {
-            // If it's a click on our zone, open the file dialog.
-            openFileDialog();
-            return true; // We handled the event, no one else should.
-        }
-    }
-
-    // For all other events, pass them to the base class implementation
-    return QMainWindow::eventFilter(watched, event);
 }
 
 // FUNC - Logic for opening the file dialog
 void MainWindow::openFileDialog()
 {
     QStringList filePaths = QFileDialog::getOpenFileNames(
-        this, "Select Images", "", "Image Files (*.png *.jpg *.jpeg *.bmp)"
-    );
-
+        this, "Select Images", "", "Image Files (*.png *.jpg *.jpeg *.bmp)");
     if (!filePaths.isEmpty()) {
         addFilesToList(filePaths);
     }
 }
 
+// !SECTION - UI Helper Methods
+// SECTION - Slots for UI actions
+
 // FUNC - Slot for the delete button.
 void MainWindow::on_deleteImageButton_clicked()
 {
-    // QListWidget::selectedItems() returns a list of all selected items.
-    // Even if we are in single-selection mode, it still returns a list (with one item).
-    QList<QListWidgetItem *> selectedItems = ui->fileListWidget->selectedItems();
-
-    // Check if the list is not empty (i.e., the user has selected something)
-    if (!selectedItems.isEmpty()) {
-        qDeleteAll(selectedItems);
-    }
+    qDeleteAll(ui->fileListWidget->selectedItems());
 }
 
 // FUNC - Slot for the up button.
@@ -145,78 +150,90 @@ void MainWindow::on_downButton_clicked()
     // 2. Check if an item is selected and if it's not already at the bottom
     // The last item's index is count() - 1
     if (currentRow != -1 && currentRow < ui->fileListWidget->count() - 1) {
-        // 3. Take the item out of the list
-        QListWidgetItem *currentItem = ui->fileListWidget->takeItem(currentRow);
-
-        // 4. Insert the same item one position lower
+        QListWidgetItem* currentItem = ui->fileListWidget->takeItem(currentRow);
         ui->fileListWidget->insertItem(currentRow + 1, currentItem);
-
-        // 5. Re-select the item
         ui->fileListWidget->setCurrentRow(currentRow + 1);
     }
 }
 
-// FUNC - Slot for the orientation combo box
-void MainWindow::on_optionOrientation_currentIndexChanged(int index)
+void MainWindow::on_orientationOption_changed()
 {
-    ui->optionAlignment->clear(); // Remove old items
-    QString currentOrientation = ui->optionOrientation->itemText(index);
+    populateAlignmentOptions();
+}
 
-    if (currentOrientation == "Vertical") {
-        ui->optionAlignment->addItems({"Left", "Center", "Right"});
+void MainWindow::populateAlignmentOptions()
+{
+    ui->optionAlignment->clear();
+    // Get the orientation enum directly from the item's data
+    auto orientation = ui->optionOrientation->currentData().value<Orientation>();
+
+    if (orientation == Orientation::Vertical) {
+        ui->optionAlignment->addItem("Left", QVariant::fromValue(CrossAxisAlignment::Start));
+        ui->optionAlignment->addItem("Center", QVariant::fromValue(CrossAxisAlignment::Center));
+        ui->optionAlignment->addItem("Right", QVariant::fromValue(CrossAxisAlignment::End));
     } else { // Horizontal
-        ui->optionAlignment->addItems({"Top", "Center", "Bottom"});
+        ui->optionAlignment->addItem("Top", QVariant::fromValue(CrossAxisAlignment::Start));
+        ui->optionAlignment->addItem("Center", QVariant::fromValue(CrossAxisAlignment::Center));
+        ui->optionAlignment->addItem("Bottom", QVariant::fromValue(CrossAxisAlignment::End));
     }
 }
 
+// !SECTION - UI Helper Methods
+// SECTION - Core Logic Slot
 
-
-// FUNC - Slot for the merge button.
 void MainWindow::on_mergeButton_clicked()
+{
+    processAndSaveImages();
+}
+
+QStringList MainWindow::getImagePathsFromList() const
 {
     QStringList imagePaths;
     for (int i = 0; i < ui->fileListWidget->count(); ++i) {
         imagePaths.append(ui->fileListWidget->item(i)->data(Qt::UserRole).toString());
     }
+    return imagePaths;
+}
+
+void MainWindow::processAndSaveImages()
+{
+    const QStringList imagePaths = getImagePathsFromList();
     if (imagePaths.isEmpty()) {
         QMessageBox::warning(this, "No Images", "Please add images to the list first.");
         return;
     }
 
-    // --- 1. Read options from ComboBoxes ---
-    // Orientation
-    Orientation orientation = (ui->optionOrientation->currentText() == "Vertical")
-                                ? Orientation::Vertical
-                                : Orientation::Horizontal;
-    // Background Color
-    QColor backgroundColor;
-    QString bgColorText = ui->optionBackgroundColor->currentText();
-    if (bgColorText == "Black")         backgroundColor = Qt::black;
-    else if (bgColorText == "White")    backgroundColor = Qt::white;
-    else                                backgroundColor = Qt::transparent; // Alpha Channel
-    // Alignment
-    Alignment alignment;
-    QString alignText = ui->optionAlignment->currentText();
-    if (alignText == "Left" || alignText == "Top")         alignment = Alignment::Left_Top;
-    else if (alignText == "Center")                        alignment = Alignment::Center;
-    else                                                   alignment = Alignment::Right_Bottom;
+    // 1. Get options from UI controls
+    const auto orientation = ui->optionOrientation->currentData().value<Orientation>();
+    const auto alignment = ui->optionAlignment->currentData().value<CrossAxisAlignment>();
+    const auto backgroundColor = ui->optionBackgroundColor->currentData().value<QColor>();
 
-
-    // --- 2. Call the updated ImageProcessor ---
-    ImageProcessor processor;
-    QImage resultImage = processor.stitchImages(imagePaths, orientation, alignment, backgroundColor);
+    // 2. Call the processor
+    QImage resultImage = m_imageProcessor.stitchImages(imagePaths, orientation, alignment, backgroundColor);
 
     if (resultImage.isNull()) {
-        QMessageBox::critical(this, "Error", "Failed to create the merged image.");
+        QMessageBox::critical(this, "Error", "Failed to create the merged image. Check if all images are valid.");
         return;
     }
 
-    // --- 3. Save the result (this part remains the same) ---
-    QString savePath = QFileDialog::getSaveFileName(this, "Save Merged Image", "merged_image.png", "PNG Image (*.png);;JPEG Image (*.jpg *.jpeg)");
-    if (savePath.isEmpty()) return;
-    if (resultImage.save(savePath)) {
-        QMessageBox::information(this, "Success", "Image saved successfully!");
+    // 3. Save the result
+    if (!saveImageToFile(resultImage)) {
+         QMessageBox::critical(this, "Error", "Failed to save the image.");
     } else {
-        QMessageBox::critical(this, "Error", "Failed to save the image.");
+        QMessageBox::information(this, "Success", "Image saved successfully!");
     }
 }
+
+bool MainWindow::saveImageToFile(const QImage& image)
+{
+    QString savePath = QFileDialog::getSaveFileName(this,
+                                                    "Save Merged Image",
+                                                    "merged_image.png",
+                                                    "PNG Image (*.png);;JPEG Image (*.jpg *.jpeg)");
+    if (savePath.isEmpty()) {
+        return false; // User cancelled
+    }
+
+    return image.save(savePath);
+}
+// !SECTION - Core Logic Slot
