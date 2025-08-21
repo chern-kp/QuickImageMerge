@@ -2,10 +2,12 @@
 
 #include <QMainWindow>
 
-// Forward declaration of the class that will be generated from mainwindow.ui
+// Forward declarations
 namespace Ui {
 class MainWindow;
 }
+class QEvent;
+class QObject;
 
 class MainWindow : public QMainWindow
 {
@@ -15,6 +17,14 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+protected:
+    // We are overriding this function to watch for events
+    bool eventFilter(QObject *watched, QEvent *event) override;
+
 private:
-    Ui::MainWindow *ui; // Pointer to the UI class generated from mainwindow.ui
+    // A helper function to keep the code clean
+    void openFileDialog();
+
+private:
+    Ui::MainWindow *ui;
 };
