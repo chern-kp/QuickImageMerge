@@ -2,6 +2,10 @@
 
 #include <QMainWindow>
 
+// For drag and drop events
+class QDragEnterEvent;
+class QDropEvent;
+
 // Forward declarations
 namespace Ui {
 class MainWindow;
@@ -18,7 +22,11 @@ public:
     ~MainWindow();
 
 protected:
-    // We are overriding this function to watch for events
+    // Called when a drag operation enters the widget
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    // Called when a drop is performed
+    void dropEvent(QDropEvent *event) override;
+    // Called when an event is filtered
     bool eventFilter(QObject *watched, QEvent *event) override;
 
 private slots:
@@ -33,6 +41,9 @@ private slots:
 private:
     // A helper function to keep the code clean
     void openFileDialog();
+
+    void addFilesToList(const QStringList &paths);
+
 
 private:
     Ui::MainWindow *ui;

@@ -1,16 +1,26 @@
 #include "mainwindow.h"
 #include "imageprocessor.h"
 #include "ui_mainwindow.h"
+
 #include <QEvent>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QMessageBox>
+
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QMimeData>
+#include <QUrl>
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
       ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    setAcceptDrops(true);
+
     ui->fileSelectionZone->installEventFilter(this);
 
     connect(ui->optionOrientation, &QComboBox::currentIndexChanged, this, &MainWindow::on_optionOrientation_currentIndexChanged);
@@ -21,6 +31,48 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+// FUNC - Drag event (For Drag & Drop)
+void MainWindow::dragEnterEvent(QDragEnterEvent *event)
+{
+    // Check if the dragged data contains URLs (which files are)
+    if (event->mimeData()->hasUrls()) {
+        // If so, accept the proposed action (e.g., show a "+" cursor)
+        event->acceptProposedAction();
+    }
+}
+
+// FUNC - Drop event (For Drag & Drop)
+void MainWindow::dropEvent(QDropEvent *event)
+{
+    // Get the list of URLs from the MIME data
+    const QList<QUrl> urls = event->mimeData()->urls();
+    QStringList filePaths;
+
+    // Convert each QUrl to a local file path string
+    for (const QUrl &url : urls) {
+        filePaths.append(url.toLocalFile());
+    }
+
+    // Use our new helper function to process the files
+    addFilesToList(filePaths);
+}
+
+// FUNC - Add Files to List
+void MainWindow::addFilesToList(const QStringList &paths)
+{
+    QStringList supportedExtensions = {"png", "jpg", "jpeg", "bmp"};
+
+    for (const QString &fullPath : paths) {
+        QFileInfo fileInfo(fullPath);
+        // Add only files with supported image extensions
+        if (supportedExtensions.contains(fileInfo.suffix().toLower())) {
+            auto *item = new QListWidgetItem(fileInfo.fileName());
+            item->setData(Qt::UserRole, fullPath); // Store full path
+            ui->fileListWidget->addItem(item);
+        }
+    }
 }
 
 // FUNC - Event filter function
@@ -44,24 +96,11 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
 void MainWindow::openFileDialog()
 {
     QStringList filePaths = QFileDialog::getOpenFileNames(
-        this,
-        "Select Images",
-        "", // Start in the default directory
-        "Image Files (*.png *.jpg *.jpeg *.bmp)"
+        this, "Select Images", "", "Image Files (*.png *.jpg *.jpeg *.bmp)"
     );
 
-    // Check if the user selected any files
     if (!filePaths.isEmpty()) {
-        // Iterate over each selected file path
-        for (const QString &fullPath : filePaths) {
-            QFileInfo fileInfo(fullPath); // Get file info for the path
-            // Create a new list widget item with the file name
-            QListWidgetItem *item = new QListWidgetItem(fileInfo.fileName());
-            // Store the full file path in the item's user data
-            item->setData(Qt::UserRole, fullPath);
-            // Add the item to the file list widget
-            ui->fileListWidget->addItem(item);
-        }
+        addFilesToList(filePaths);
     }
 }
 
