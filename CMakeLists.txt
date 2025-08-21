@@ -22,3 +22,8 @@ add_executable(QuickImageMerge
 )
 
 target_link_libraries(QuickImageMerge PRIVATE Qt6::Widgets)
+
+# Add the -mwindows linker flag to suppress the console window on Windows
+if(WIN32)
+    target_link_options(QuickImageMerge PRIVATE -mwindows)
+endif()

@@ -35,7 +35,7 @@ MainWindow::~MainWindow()
 void MainWindow::setupConnections()
 {
     // Connect the orientation dropdown to our new slot
-    connect(ui->optionOrientation, &QComboBox::currentIndexChanged, this, &MainWindow::on_orientationOption_changed);
+    connect(ui->optionOrientation, &QComboBox::currentIndexChanged, this, &MainWindow::on_optionOrientation_currentIndexChanged);
 }
 
 void MainWindow::setupOptionControls()
@@ -156,8 +156,10 @@ void MainWindow::on_downButton_clicked()
     }
 }
 
-void MainWindow::on_orientationOption_changed()
+void MainWindow::on_optionOrientation_currentIndexChanged(int index)
 {
+    // This slot handles changes to the orientation option.
+    // It updates the available alignment options based on the selected orientation.
     populateAlignmentOptions();
 }
 

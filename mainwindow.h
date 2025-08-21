@@ -30,7 +30,7 @@ private slots:
     void on_upButton_clicked();
     void on_downButton_clicked();
     void on_mergeButton_clicked();
-    void on_orientationOption_changed();
+    void on_optionOrientation_currentIndexChanged(int index);
 
 private:
     // Setup methods
