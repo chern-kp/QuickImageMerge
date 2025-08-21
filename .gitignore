@@ -48,3 +48,4 @@ ipch/
 *.tmp
 
 .vscode
+/Release Builds
