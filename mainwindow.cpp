@@ -72,3 +72,42 @@ void MainWindow::on_deleteImageButton_clicked()
         qDeleteAll(selectedItems);
     }
 }
+
+// FUNC - Slot for the up button.
+void MainWindow::on_upButton_clicked()
+{
+    // 1. Get the index of the currently selected row
+    int currentRow = ui->fileListWidget->currentRow();
+
+    // 2. Check if an item is selected and if it's not already at the top
+    if (currentRow > 0) {
+        // 3. Take the item out of the list. It's not deleted, we just hold a pointer to it.
+        QListWidgetItem *currentItem = ui->fileListWidget->takeItem(currentRow);
+
+        // 4. Insert the same item one position higher
+        ui->fileListWidget->insertItem(currentRow - 1, currentItem);
+
+        // 5. Re-select the item in its new position
+        ui->fileListWidget->setCurrentRow(currentRow - 1);
+    }
+}
+
+// FUNC - Slot for the down button.
+void MainWindow::on_downButton_clicked()
+{
+    // 1. Get the index of the currently selected row
+    int currentRow = ui->fileListWidget->currentRow();
+
+    // 2. Check if an item is selected and if it's not already at the bottom
+    // The last item's index is count() - 1
+    if (currentRow != -1 && currentRow < ui->fileListWidget->count() - 1) {
+        // 3. Take the item out of the list
+        QListWidgetItem *currentItem = ui->fileListWidget->takeItem(currentRow);
+
+        // 4. Insert the same item one position lower
+        ui->fileListWidget->insertItem(currentRow + 1, currentItem);
+
+        // 5. Re-select the item
+        ui->fileListWidget->setCurrentRow(currentRow + 1);
+    }
+}

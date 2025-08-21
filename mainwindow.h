@@ -22,7 +22,10 @@ protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 
 private slots:
-    void on_deleteImageButton_clicked();     // This slot will be automatically called when 'deleteImageButton' is clicked.
+    void on_deleteImageButton_clicked(); // Slot for 'deleteImageButton' button
+    void on_upButton_clicked(); // Slot for 'upButton' button
+    void on_downButton_clicked(); // Slot for 'downButton' button
+
 
 
 private:
