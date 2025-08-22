@@ -235,11 +235,7 @@ void MainWindow::processAndSaveImages()
 
     // 3. Save the result
     const bool quickSave = ui->optionQuickSaveCheckBox->isChecked();
-    if (!saveImageToFile(resultImage, quickSave)) {
-         if (!quickSave) {
-            QMessageBox::critical(this, "Error", "Failed to save the image.");
-         }
-    } else {
+    if (saveImageToFile(resultImage, quickSave)) {
         if (!quickSave) { // Show success message only if not quick saving
             QMessageBox::information(this, "Success", "Image saved successfully!");
         }
@@ -270,7 +266,7 @@ bool MainWindow::saveImageToFile(const QImage& image, bool quickSave)
     }
 
     if (savePath.isEmpty()) {
-        return false; // User cancelled or path is empty during quick save (which should not happen)
+        return false; // User cancelled, do nothing.
     }
 
     if (image.save(savePath)) {
@@ -281,9 +277,11 @@ bool MainWindow::saveImageToFile(const QImage& image, bool quickSave)
         // Save the path for future sessions
         QSettings settings("MySoft", "QuickImageMerge");
         settings.setValue("lastSaveDir", m_lastSaveDirPath);
-
         return true;
+    } else {
+        // Real I/O error, inform the user.
+        QMessageBox::critical(this, "Error", "Failed to save the image to disk.");
+        return false;
     }
-    return false;
 }
 // !SECTION - Core Logic Slot
