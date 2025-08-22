@@ -45,7 +45,7 @@ private:
 
     // Helper method for core logic
     void processAndSaveImages();
-    bool saveImageToFile(const QImage& image);
+    bool saveImageToFile(const QImage& image, bool quickSave = false);
 
 private:
     Ui::MainWindow* ui;

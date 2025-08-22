@@ -9,6 +9,7 @@
 #include <QMimeData>
 #include <QMessageBox>
 #include <QUrl>
+#include <QDir>
 
 const QStringList MainWindow::SUPPORTED_EXTENSIONS = {"png", "jpg", "jpeg", "bmp"};
 
@@ -226,21 +227,43 @@ void MainWindow::processAndSaveImages()
     }
 
     // 3. Save the result
-    if (!saveImageToFile(resultImage)) {
-         QMessageBox::critical(this, "Error", "Failed to save the image.");
+    const bool quickSave = ui->optionQuickSaveCheckBox->isChecked();
+    if (!saveImageToFile(resultImage, quickSave)) {
+         if (!quickSave) {
+            QMessageBox::critical(this, "Error", "Failed to save the image.");
+         }
     } else {
-        QMessageBox::information(this, "Success", "Image saved successfully!");
+        if (!quickSave) { // Show success message only if not quick saving
+            QMessageBox::information(this, "Success", "Image saved successfully!");
+        }
     }
 }
 
-bool MainWindow::saveImageToFile(const QImage& image)
+bool MainWindow::saveImageToFile(const QImage& image, bool quickSave)
 {
-    QString savePath = QFileDialog::getSaveFileName(this,
-                                                    "Save Merged Image",
-                                                    m_lastSaveDirPath + "/merged_image.png", // Use last save path
-                                                    "PNG Image (*.png);;JPEG Image (*.jpg *.jpeg)");
+    QString savePath;
+    if (quickSave) {
+        // Automatic saving to the last used directory
+        QString baseName = "merged_image";
+        QString suffix = ".png";
+        int counter = 0;
+        do {
+            savePath = m_lastSaveDirPath + "/" + baseName;
+            if (counter > 0) {
+                savePath += QString(" (%1)").arg(counter);
+            }
+            savePath += suffix;
+            counter++;
+        } while (QFile::exists(savePath)); // Check if a file with this name already exists
+    } else {
+        savePath = QFileDialog::getSaveFileName(this,
+                                                "Save Merged Image",
+                                                m_lastSaveDirPath + "/merged_image.png", // Use last save path
+                                                "PNG Image (*.png);;JPEG Image (*.jpg *.jpeg)");
+    }
+
     if (savePath.isEmpty()) {
-        return false; // User cancelled
+        return false; // User cancelled or path is empty during quick save (which should not happen)
     }
 
     if (image.save(savePath)) {
