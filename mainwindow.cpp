@@ -10,6 +10,7 @@
 #include <QMessageBox>
 #include <QUrl>
 #include <QDir>
+#include <QSettings>
 
 const QStringList MainWindow::SUPPORTED_EXTENSIONS = {"png", "jpg", "jpeg", "bmp"};
 
@@ -26,8 +27,9 @@ MainWindow::MainWindow(QWidget* parent)
     setupConnections();
 
     // Initialize last used directories
-    m_lastOpenDirPath = QDir::homePath();
-    m_lastSaveDirPath = QDir::homePath();
+    QSettings settings("MySoft", "QuickImageMerge");
+    m_lastOpenDirPath = settings.value("lastOpenDir", QDir::homePath()).toString();
+    m_lastSaveDirPath = settings.value("lastSaveDir", QDir::homePath()).toString();
 }
 
 MainWindow::~MainWindow()
@@ -117,6 +119,11 @@ void MainWindow::openFileDialog()
         // Update the last used directory for opening files
         QFileInfo fileInfo(filePaths.first());
         m_lastOpenDirPath = fileInfo.absoluteDir().absolutePath();
+
+        // Save the path for future sessions
+        QSettings settings("MySoft", "QuickImageMerge");
+        settings.setValue("lastOpenDir", m_lastOpenDirPath);
+
         addFilesToList(filePaths);
     }
 }
@@ -270,6 +277,11 @@ bool MainWindow::saveImageToFile(const QImage& image, bool quickSave)
         // Update the last used directory for saving files
         QFileInfo fileInfo(savePath);
         m_lastSaveDirPath = fileInfo.absoluteDir().absolutePath();
+
+        // Save the path for future sessions
+        QSettings settings("MySoft", "QuickImageMerge");
+        settings.setValue("lastSaveDir", m_lastSaveDirPath);
+
         return true;
     }
     return false;
