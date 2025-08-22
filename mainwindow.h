@@ -52,4 +52,7 @@ private:
     ImageProcessor m_imageProcessor;
 
     static const QStringList SUPPORTED_EXTENSIONS;
+
+    QString m_lastOpenDirPath;
+    QString m_lastSaveDirPath;
 };

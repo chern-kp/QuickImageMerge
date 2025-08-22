@@ -23,6 +23,10 @@ MainWindow::MainWindow(QWidget* parent)
 
     setupOptionControls();
     setupConnections();
+
+    // Initialize last used directories
+    m_lastOpenDirPath = QDir::homePath();
+    m_lastSaveDirPath = QDir::homePath();
 }
 
 MainWindow::~MainWindow()
@@ -107,8 +111,11 @@ void MainWindow::addFilesToList(const QStringList& paths)
 void MainWindow::openFileDialog()
 {
     QStringList filePaths = QFileDialog::getOpenFileNames(
-        this, "Select Images", "", "Image Files (*.png *.jpg *.jpeg *.bmp)");
+        this, "Select Images", m_lastOpenDirPath, "Image Files (*.png *.jpg *.jpeg *.bmp)");
     if (!filePaths.isEmpty()) {
+        // Update the last used directory for opening files
+        QFileInfo fileInfo(filePaths.first());
+        m_lastOpenDirPath = fileInfo.absoluteDir().absolutePath();
         addFilesToList(filePaths);
     }
 }
@@ -230,12 +237,18 @@ bool MainWindow::saveImageToFile(const QImage& image)
 {
     QString savePath = QFileDialog::getSaveFileName(this,
                                                     "Save Merged Image",
-                                                    "merged_image.png",
+                                                    m_lastSaveDirPath + "/merged_image.png", // Use last save path
                                                     "PNG Image (*.png);;JPEG Image (*.jpg *.jpeg)");
     if (savePath.isEmpty()) {
         return false; // User cancelled
     }
 
-    return image.save(savePath);
+    if (image.save(savePath)) {
+        // Update the last used directory for saving files
+        QFileInfo fileInfo(savePath);
+        m_lastSaveDirPath = fileInfo.absoluteDir().absolutePath();
+        return true;
+    }
+    return false;
 }
 // !SECTION - Core Logic Slot
