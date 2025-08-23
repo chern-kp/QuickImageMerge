@@ -1,22 +1,50 @@
+# Name of the workflow, displayed in "Actions" on GitHub
 name: Create Release
 
+# Trigger - when a new tag that starts with "v" is pushed, this workflow will be triggered
 on:
   push:
     tags:
       - 'v*.*.*'
 
+# Required permissions to write releases
+permissions:
+  contents: write
+
+# List of jobs to run in this workflow
 jobs:
   build-release:
     runs-on: windows-latest
 
     steps:
+      # Clone the repository inside the github's virtual environment
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # Fetch all history for all tags and branches, required for changelog reader
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
+      # Get version from tag
+      - name: Get version from tag
+        id: get_version
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".Substring(1)
+          echo "VERSION=$version" | Add-Content -Path $env:GITHUB_ENV
+          echo "Release version is $version"
+
+      # Read CHANGELOG.md
+      - name: Read changelog
+        id: changelog
+        uses: mindsers/changelog-reader-action@v2
+        with:
+          version: ${{ env.VERSION }}
+          path: ./CHANGELOG.md
 
       - name: Install Qt
         id: install_qt
@@ -33,7 +61,7 @@ jobs:
           cmake -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="${{ env.QT_ROOT_DIR }}"
 
       - name: Build Project
-        run: cmake --build build --config Release -- /p:SubSystem=Windows
+        run: cmake --build build --config Release
 
       - name: Deploy with windeployqt
         run: |
@@ -42,12 +70,16 @@ jobs:
           windeployqt.exe --release --no-translations deploy\QuickImageMerge.exe
 
       - name: Archive Release
-        run: Compress-Archive -Path deploy\* -DestinationPath QuickImageMerge-${{ github.ref_name }}.zip
+        run: Compress-Archive -Path deploy\* -DestinationPath QuickImageMerge-${{ github.ref_name }}-Qt6.8.1.zip
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
-          files: QuickImageMerge-${{ github.ref_name }}.zip
-          generate_release_notes: true
-          body: |
-            **Download**: QuickImageMerge-${{ github.ref_name }}.zip
+          # Use body from CHANGELOG.md
+          body: ${{ steps.changelog.outputs.changes }}
+          # Dynamic release name
+          name: QuickImageMerge ${{ github.ref_name }}
+          # Specify which files to attach
+          files: QuickImageMerge-${{ github.ref_name }}-Qt6.8.1.zip
+          # Disable automatic generation, as we provide our own
+          generate_release_notes: false
