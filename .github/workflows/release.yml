@@ -70,7 +70,7 @@ jobs:
           windeployqt.exe --release --no-translations deploy\QuickImageMerge.exe
 
       - name: Archive Release
-        run: Compress-Archive -Path deploy\* -DestinationPath QuickImageMerge-${{ github.ref_name }}-Qt6.8.1.zip
+        run: Compress-Archive -Path deploy\* -DestinationPath QuickImageMerge-${{ github.ref_name }}.zip
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -80,6 +80,6 @@ jobs:
           # Dynamic release name
           name: QuickImageMerge ${{ github.ref_name }}
           # Specify which files to attach
-          files: QuickImageMerge-${{ github.ref_name }}-Qt6.8.1.zip
+          files: QuickImageMerge-${{ github.ref_name }}.zip
           # Disable automatic generation, as we provide our own
           generate_release_notes: false
