@@ -22,6 +22,38 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="mainLayout">
     <item>
+     <widget class="QGroupBox" name="settingsBox">
+      <property name="title">
+       <string>Global Settings</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,2">
+       <item>
+        <widget class="QPushButton" name="addToContextMenuButton">
+         <property name="text">
+          <string>Add to Windows Context Menu</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
      <widget class="QLabel" name="fileSelectionZone">
       <property name="minimumSize">
        <size>
@@ -141,10 +173,22 @@
      </widget>
     </item>
     <item>
-     <widget class="QCheckBox" name="optionQuickSaveCheckBox">
-      <property name="text">
-       <string>Quick Save</string>
+     <widget class="QGroupBox" name="savingOptionsBox">
+      <property name="title">
+       <string>Saving Options</string>
       </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QCheckBox" name="optionQuickSaveCheckBox">
+         <property name="text">
+          <string>Quick Save</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </item>
    </layout>
