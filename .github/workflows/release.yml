@@ -11,7 +11,7 @@ on:
 permissions:
   contents: write
 
-# List of jobs to run in this workflow
+# Jobs
 jobs:
   build-release:
     runs-on: windows-latest
@@ -42,6 +42,7 @@ jobs:
       - name: Read changelog
         id: changelog
         uses: mindsers/changelog-reader-action@v2
+        continue-on-error: true
         with:
           version: ${{ env.VERSION }}
           path: ./CHANGELOG.md
@@ -76,10 +77,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           # Use body from CHANGELOG.md
-          body: ${{ steps.changelog.outputs.changes }}
-          # Dynamic release name
+          body: |
+            ${{ steps.changelog.outputs.changes || 'No changelog entry for this version.' }}
           name: QuickImageMerge ${{ github.ref_name }}
-          # Specify which files to attach
           files: QuickImageMerge-${{ github.ref_name }}.zip
-          # Disable automatic generation, as we provide our own
           generate_release_notes: false

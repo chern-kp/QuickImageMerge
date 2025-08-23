@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.2] - 2025-08-23
+### Fixed
+- Fixed an empty command line window opening on top of the main window.
+
 ## [1.0.1] - 2025-08-22
 ### Added
 - Added quick save option for saving files without opening any dialogs.

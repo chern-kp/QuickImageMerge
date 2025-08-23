@@ -1,3 +1,7 @@
+#if defined(_MSC_VER)
+#pragma comment(linker, "/SUBSYSTEM:WINDOWS")
+#endif
+
 #include "mainwindow.h"
 #include <QApplication>
 
