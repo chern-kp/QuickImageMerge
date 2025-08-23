@@ -30,6 +30,9 @@ MainWindow::MainWindow(QWidget* parent)
     QSettings settings("MySoft", "QuickImageMerge");
     m_lastOpenDirPath = settings.value("lastOpenDir", QDir::homePath()).toString();
     m_lastSaveDirPath = settings.value("lastSaveDir", QDir::homePath()).toString();
+
+    // Allow multi-selection with Ctrl/Shift
+    ui->fileListWidget->setSelectionMode(QAbstractItemView::ExtendedSelection);
 }
 
 MainWindow::~MainWindow()
@@ -140,34 +143,80 @@ void MainWindow::on_deleteImageButton_clicked()
 // FUNC - Slot for the up button.
 void MainWindow::on_upButton_clicked()
 {
-    // 1. Get the index of the currently selected row
-    int currentRow = ui->fileListWidget->currentRow();
+    QList<QListWidgetItem*> selection = ui->fileListWidget->selectedItems();
+    if (selection.isEmpty()) {
+        return;
+    }
 
-    // 2. Check if an item is selected and if it's not already at the top
-    if (currentRow > 0) {
-        // 3. Take the item out of the list. It's not deleted, we just hold a pointer to it.
-        QListWidgetItem *currentItem = ui->fileListWidget->takeItem(currentRow);
+    // Get all selected rows and sort them
+    QList<int> selectedRows;
+    for (QListWidgetItem* item : selection) {
+        selectedRows.append(ui->fileListWidget->row(item));
+    }
+    std::sort(selectedRows.begin(), selectedRows.end());
 
-        // 4. Insert the same item one position higher
-        ui->fileListWidget->insertItem(currentRow - 1, currentItem);
+    // If the top-most item is already at the top, we can't move up
+    if (selectedRows.first() == 0) {
+        return;
+    }
 
-        // 5. Re-select the item in its new position
-        ui->fileListWidget->setCurrentRow(currentRow - 1);
+    // Disable signals to avoid performance issues and unwanted slot calls
+    ui->fileListWidget->blockSignals(true);
+
+    // Move each selected item up by one position
+    for (int row : selectedRows) {
+        QListWidgetItem* item = ui->fileListWidget->takeItem(row);
+        ui->fileListWidget->insertItem(row - 1, item);
+        item->setSelected(true);
+    }
+
+    // Re-enable signals
+    ui->fileListWidget->blockSignals(false);
+
+    // Ensure the first moved item is visible, without changing the selection
+    QListWidgetItem* firstMovedItem = ui->fileListWidget->item(selectedRows.first() - 1);
+    if (firstMovedItem) {
+        ui->fileListWidget->scrollToItem(firstMovedItem);
     }
 }
 
 // FUNC - Slot for the down button.
 void MainWindow::on_downButton_clicked()
 {
-    // 1. Get the index of the currently selected row
-    int currentRow = ui->fileListWidget->currentRow();
+    QList<QListWidgetItem*> selection = ui->fileListWidget->selectedItems();
+    if (selection.isEmpty()) {
+        return;
+    }
 
-    // 2. Check if an item is selected and if it's not already at the bottom
-    // The last item's index is count() - 1
-    if (currentRow != -1 && currentRow < ui->fileListWidget->count() - 1) {
-        QListWidgetItem* currentItem = ui->fileListWidget->takeItem(currentRow);
-        ui->fileListWidget->insertItem(currentRow + 1, currentItem);
-        ui->fileListWidget->setCurrentRow(currentRow + 1);
+    // Get all selected rows and sort them
+    QList<int> selectedRows;
+    for (QListWidgetItem* item : selection) {
+        selectedRows.append(ui->fileListWidget->row(item));
+    }
+    // Sort descending for moving down
+    std::sort(selectedRows.begin(), selectedRows.end(), std::greater<int>());
+
+    // If the bottom-most item is already at the bottom, we can't move down
+    if (selectedRows.first() == ui->fileListWidget->count() - 1) {
+        return;
+    }
+
+    ui->fileListWidget->blockSignals(true);
+
+    // Move each selected item down by one position
+    for (int row : selectedRows) {
+        QListWidgetItem* item = ui->fileListWidget->takeItem(row);
+        ui->fileListWidget->insertItem(row + 1, item);
+        item->setSelected(true);
+    }
+
+    ui->fileListWidget->blockSignals(false);
+
+    // Ensure the last moved item is visible, without changing the selection
+    // `selectedRows` is sorted descending, so `first()` gives us the original bottom-most row
+    QListWidgetItem* lastMovedItem = ui->fileListWidget->item(selectedRows.first() + 1);
+    if (lastMovedItem) {
+        ui->fileListWidget->scrollToItem(lastMovedItem);
     }
 }
 
