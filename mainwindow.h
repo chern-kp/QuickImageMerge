@@ -31,6 +31,7 @@ private slots:
     void on_downButton_clicked();
     void on_mergeButton_clicked();
     void on_optionOrientation_currentIndexChanged(int index);
+    void on_addToContextMenuButton_clicked();
 
 private:
     // Setup methods

@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include <QCoreApplication>
 #include <QDragEnterEvent>
 #include <QDropEvent>
 #include <QEvent>
@@ -224,6 +225,70 @@ void MainWindow::on_downButton_clicked()
     }
 }
 
+//FUNC - Slot for the "Add to Context Menu" button.
+void MainWindow::on_addToContextMenuButton_clicked()
+{
+    const QString appPath = QDir::toNativeSeparators(QCoreApplication::applicationFilePath());
+    const QString menuName = "Add to Quick Image Merge";
+    bool success = true;
+
+    // Check if the context menu item exists for the first supported extension. (We assume that if it exists for one, it exists for all.)
+    QString checkKeyPath = QString("HKEY_CLASSES_ROOT\\SystemFileAssociations\\.%1\\shell\\%2").arg(SUPPORTED_EXTENSIONS.first(), menuName);
+    QSettings checkSettings(checkKeyPath, QSettings::NativeFormat);
+
+    if (checkSettings.childGroups().isEmpty() && checkSettings.allKeys().isEmpty()) {
+        // Add context menu items
+        for (const QString& ext : SUPPORTED_EXTENSIONS) {
+            QString keyPath = QString("HKEY_CLASSES_ROOT\\SystemFileAssociations\\.%1\\shell\\%2").arg(ext, menuName);
+            QSettings settings(keyPath, QSettings::NativeFormat);
+
+            settings.setValue("Icon", appPath);
+            settings.setValue("FriendlyAppName", "Quick Image Merge");
+
+            QString commandKeyPath = keyPath + "\\command";
+            QSettings commandSettings(commandKeyPath, QSettings::NativeFormat);
+            commandSettings.setValue(".", QString("\"%1\" \"%2\"").arg(appPath, "%1"));
+
+            if (settings.status() != QSettings::NoError || commandSettings.status() != QSettings::NoError) {
+                success = false;
+            }
+        }
+
+        if (success) {
+            QMessageBox::information(this, "Success", "Context menu item added successfully!");
+        } else {
+            QMessageBox::critical(this, "Error", "Failed to add context menu item. Please try running as administrator.");
+        }
+    } else {
+        // Remove context menu items
+        QMessageBox msgBox;
+        msgBox.setText("The context menu item already exists.");
+        msgBox.setInformativeText("Do you want to remove it?");
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        msgBox.setDefaultButton(QMessageBox::No);
+        msgBox.setIcon(QMessageBox::Question);
+
+        if (msgBox.exec() == QMessageBox::Yes) {
+            for (const QString& ext : SUPPORTED_EXTENSIONS) {
+                QString keyPath = QString("HKEY_CLASSES_ROOT\\SystemFileAssociations\\.%1\\shell\\%2").arg(ext, menuName);
+                QSettings settings(keyPath, QSettings::NativeFormat);
+                settings.remove("");
+
+                if (settings.status() != QSettings::NoError) {
+                    success = false;
+                }
+            }
+
+            if (success) {
+                QMessageBox::information(this, "Success", "Context menu item removed successfully!");
+            } else {
+                QMessageBox::critical(this, "Error", "Failed to remove context menu item. Please try running as administrator.");
+            }
+        }
+    }
+}
+
+
 void MainWindow::on_optionOrientation_currentIndexChanged(int index)
 {
     // This slot handles changes to the orientation option.
@@ -312,10 +377,11 @@ bool MainWindow::saveImageToFile(const QImage& image, bool quickSave)
             counter++;
         } while (QFile::exists(savePath)); // Check if a file with this name already exists
     } else {
-        savePath = QFileDialog::getSaveFileName(this,
-                                                "Save Merged Image",
-                                                m_lastSaveDirPath + "/merged_image.png", // Use last save path
-                                                "PNG Image (*.png);;JPEG Image (*.jpg *.jpeg)");
+        savePath = QFileDialog::getSaveFileName(
+            this,
+            "Save Merged Image",
+            m_lastSaveDirPath + "/merged_image.png", // Use last save path
+            "PNG Image (*.png);;JPEG Image (*.jpg *.jpeg)");
     }
 
     if (savePath.isEmpty()) {
