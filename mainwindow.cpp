@@ -33,6 +33,10 @@ MainWindow::MainWindow(QWidget* parent)
 
     // Allow multi-selection with Ctrl/Shift
     ui->fileListWidget->setSelectionMode(QAbstractItemView::ExtendedSelection);
+
+    // Enable drag and drop for reordering
+    ui->fileListWidget->setDragDropMode(QAbstractItemView::InternalMove);
+    ui->fileListWidget->setDropIndicatorShown(true);
 }
 
 MainWindow::~MainWindow()
