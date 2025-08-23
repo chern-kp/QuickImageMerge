@@ -14,7 +14,7 @@ set(CMAKE_AUTORCC ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
-add_executable(QuickImageMerge WIN32
+add_executable(QuickImageMerge
     main.cpp
     mainwindow.cpp
     mainwindow.h
@@ -22,5 +22,11 @@ add_executable(QuickImageMerge WIN32
     imageprocessor.cpp
     imageprocessor.h
 )
+
+if(MSVC)
+  set_target_properties(QuickImageMerge PROPERTIES WIN32_EXECUTABLE ON)
+else()
+  target_link_options(QuickImageMerge PRIVATE -mwindows)
+endif()
 
 target_link_libraries(QuickImageMerge PRIVATE Qt6::Widgets)
